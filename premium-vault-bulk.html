@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PremiumVault — Stock Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090c14;
+    --surface: #0f1422;
+    --surface2: #161d30;
+    --border: rgba(255,255,255,0.07);
+    --gold: #c9a84c;
+    --gold2: #f0cc6e;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #e8e8f0;
+    --muted: #6b7394;
+    --accent: #4c8ef5;
+    --danger: #e05c6a;
+    --success: #4ecb8a;
+    --glass: rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.09);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:''; position:fixed; top:-30%; right:-20%;
+    width:700px; height:700px;
+    background:radial-gradient(circle,rgba(201,168,76,0.06) 0%,transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+  body::after {
+    content:''; position:fixed; bottom:-20%; left:-10%;
+    width:500px; height:500px;
+    background:radial-gradient(circle,rgba(76,142,245,0.05) 0%,transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes shimmer { 0%,100%{opacity:0.6} 50%{opacity:1} }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.3)} 50%{box-shadow:0 0 0 8px rgba(201,168,76,0)} }
+  @keyframes slideUp { from{transform:translateY(120%) translateX(-50%);opacity:0} to{transform:translateY(0) translateX(-50%);opacity:1} }
+  @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+  /* ── INPUT BASE ── */
+  input[type="text"], input[type="password"], input[type="email"], select, textarea {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:13px 14px 13px 42px;
+    color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.12);
+  }
+  select { appearance:none; cursor:pointer; }
+  textarea { resize:vertical; min-height:80px; padding:13px 14px; font-size:14px; }
+
+  /* ── LOGIN ── */
+  #loginPage {
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:24px; position:relative; z-index:1;
+  }
+  .login-card {
+    background:var(--surface); border:1px solid var(--glass-border);
+    border-radius:24px; padding:52px 48px; width:100%; max-width:440px;
+    backdrop-filter:blur(20px); animation:fadeIn 0.6s ease; position:relative; overflow:hidden;
+  }
+  .login-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .brand { text-align:center; margin-bottom:40px; }
+  .brand-icon {
+    width:64px; height:64px;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    border-radius:18px; display:inline-flex; align-items:center; justify-content:center;
+    font-size:28px; margin-bottom:20px;
+    box-shadow:0 8px 32px rgba(201,168,76,0.3); animation:pulse 3s infinite;
+  }
+  .brand h1 {
+    font-family:'Cinzel',serif; font-size:26px; font-weight:700; letter-spacing:2px;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .brand p { color:var(--muted); font-size:13px; margin-top:6px; letter-spacing:0.5px; }
+
+  .form-group { margin-bottom:20px; position:relative; }
+  .form-group label {
+    display:block; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:8px; font-weight:500;
+  }
+  .input-wrap { position:relative; }
+  .input-wrap .ico {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    color:var(--muted); font-size:16px; pointer-events:none;
+  }
+
+  .remember-row { display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+  .remember-row input[type="checkbox"] { width:18px; height:18px; accent-color:var(--gold); cursor:pointer; padding:0; }
+  .remember-row label { font-size:13px; color:var(--muted); cursor:pointer; user-select:none; }
+
+  .error-msg {
+    background:rgba(224,92,106,0.12); border:1px solid rgba(224,92,106,0.3);
+    color:var(--danger); padding:10px 14px; border-radius:10px;
+    font-size:13px; margin-bottom:16px; display:none;
+  }
+  .register-link { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
+  .register-link a { color:var(--gold); text-decoration:none; font-weight:500; cursor:pointer; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    gap:8px; padding:13px 24px; border-radius:12px;
+    font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600;
+    letter-spacing:0.3px; cursor:pointer; border:none; transition:all 0.2s; text-decoration:none;
+  }
+  .btn-gold {
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    color:#1a1200; width:100%; font-size:15px; padding:15px;
+  }
+  .btn-gold:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(201,168,76,0.35); }
+  .btn-gold:active { transform:translateY(0); }
+  .btn-gold:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .btn-ghost { background:var(--glass); border:1px solid var(--glass-border); color:var(--text); }
+  .btn-ghost:hover { background:var(--surface2); border-color:var(--gold); color:var(--gold); }
+  .btn-danger { background:rgba(224,92,106,0.15); border:1px solid rgba(224,92,106,0.3); color:var(--danger); }
+  .btn-danger:hover { background:rgba(224,92,106,0.28); }
+  .btn-info { background:rgba(76,142,245,0.12); border:1px solid rgba(76,142,245,0.25); color:#4c8ef5; }
+  .btn-info:hover { background:rgba(76,142,245,0.22); }
+  .btn-success { background:rgba(78,203,138,0.12); border:1px solid rgba(78,203,138,0.25); color:var(--success); }
+  .btn-success:hover { background:rgba(78,203,138,0.22); }
+  .btn-sm { padding:7px 14px; font-size:12px; border-radius:8px; }
+  .btn-xs { padding:5px 10px; font-size:11px; border-radius:7px; }
+
+  /* ── LAYOUT ── */
+  #app { display:none; position:relative; z-index:1; }
+  .layout { display:flex; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width:260px; min-height:100vh; background:var(--surface);
+    border-right:1px solid var(--border); display:flex; flex-direction:column;
+    position:fixed; top:0; left:0; bottom:0; z-index:100; transition:transform 0.3s;
+  }
+  .sidebar-top { padding:28px 24px 20px; border-bottom:1px solid var(--border); }
+  .sidebar-brand { display:flex; align-items:center; gap:12px; }
+  .sb-icon {
+    width:40px; height:40px; background:linear-gradient(135deg,var(--gold),var(--gold2));
+    border-radius:12px; display:flex; align-items:center; justify-content:center;
+    font-size:18px; flex-shrink:0;
+  }
+  .sb-title {
+    font-family:'Cinzel',serif; font-size:16px; font-weight:700;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height:1.2;
+  }
+  .sb-sub { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+  .sidebar-nav { flex:1; padding:20px 16px; overflow-y:auto; }
+  .nav-section-label {
+    font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--muted); padding:0 8px; margin:16px 0 8px; font-weight:500;
+  }
+  .nav-item {
+    display:flex; align-items:center; gap:12px; padding:10px 12px;
+    border-radius:10px; cursor:pointer; font-size:14px; color:var(--muted);
+    transition:all 0.2s; margin-bottom:2px;
+  }
+  .nav-item:hover { background:var(--glass); color:var(--text); }
+  .nav-item.active { background:var(--gold-dim); color:var(--gold); font-weight:500; }
+  .nav-item .nav-ico { font-size:18px; width:20px; text-align:center; }
+  .nav-badge {
+    margin-left:auto; background:var(--gold-dim); color:var(--gold);
+    font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .sidebar-footer { padding:16px; border-top:1px solid var(--border); }
+  .user-card {
+    display:flex; align-items:center; gap:12px; padding:10px 12px;
+    border-radius:12px; background:var(--glass); border:1px solid var(--border);
+  }
+  .user-avatar {
+    width:36px; height:36px; border-radius:10px;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:700; color:#1a1200; flex-shrink:0; font-family:'Cinzel',serif;
+  }
+  .user-name { font-size:13px; font-weight:600; }
+  .user-role { font-size:11px; color:var(--gold); }
+  .logout-btn {
+    margin-left:auto; background:none; border:none; color:var(--muted);
+    cursor:pointer; font-size:18px; padding:4px; border-radius:6px; transition:color 0.2s;
+  }
+  .logout-btn:hover { color:var(--danger); }
+
+  /* ── MAIN CONTENT ── */
+  .main-content { margin-left:260px; flex:1; padding:32px 36px; min-height:100vh; }
+
+  .page-header {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    margin-bottom:32px; gap:16px; flex-wrap:wrap;
+  }
+  .page-title {
+    font-family:'Cinzel',serif; font-size:28px; font-weight:700;
+    background:linear-gradient(135deg,var(--text),var(--muted));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .page-sub { color:var(--muted); font-size:14px; margin-top:4px; }
+
+  /* ── STATS ── */
+  .stats-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px; margin-bottom:32px; animation:fadeIn 0.5s ease;
+  }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:20px 22px; position:relative; overflow:hidden; transition:border-color 0.2s;
+  }
+  .stat-card:hover { border-color:rgba(201,168,76,0.3); }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);
+  }
+  .stat-ico { font-size:24px; margin-bottom:12px; }
+  .stat-val {
+    font-size:28px; font-weight:700; font-family:'JetBrains Mono',monospace;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .stat-label { font-size:12px; color:var(--muted); margin-top:4px; letter-spacing:0.5px; }
+
+  /* ── TOOLBAR ── */
+  .toolbar { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; align-items:center; }
+  .search-wrap { position:relative; flex:1; min-width:200px; }
+  .search-wrap .s-ico {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    color:var(--muted); pointer-events:none;
+  }
+  #searchInput { padding-left:42px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+  .filter-select {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:13px 14px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:14px; outline:none; appearance:none; cursor:pointer; min-width:140px; transition:border-color 0.2s;
+  }
+  .filter-select:hover, .filter-select:focus { border-color:var(--gold); }
+  .view-toggle { display:flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .view-btn {
+    background:none; border:none; padding:10px 14px; color:var(--muted);
+    cursor:pointer; font-size:16px; transition:all 0.2s;
+  }
+  .view-btn.active { background:var(--gold-dim); color:var(--gold); }
+
+  /* ── CAT TABS ── */
+  .cat-tabs {
+    display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border); padding-bottom:16px; animation:fadeIn 0.4s ease;
+  }
+  .cat-tab {
+    display:flex; align-items:center; gap:8px; padding:8px 16px;
+    border-radius:10px; font-size:13px; font-weight:500; cursor:pointer;
+    border:1px solid var(--border); background:transparent; color:var(--muted);
+    transition:all 0.2s; white-space:nowrap;
+  }
+  .cat-tab:hover { border-color:var(--gold-dim); color:var(--text); background:var(--glass); }
+  .cat-tab.active { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); font-weight:600; }
+  .tab-count { background:rgba(255,255,255,0.08); font-size:11px; padding:2px 7px; border-radius:20px; font-family:'JetBrains Mono',monospace; }
+  .cat-tab.active .tab-count { background:rgba(201,168,76,0.2); color:var(--gold2); }
+
+  /* ── CARDS ── */
+  .accounts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; animation:fadeIn 0.4s ease; }
+  .account-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:18px; padding:22px; position:relative; overflow:hidden; transition:all 0.25s;
+  }
+  .account-card:hover { transform:translateY(-2px); border-color:rgba(201,168,76,0.25); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+  .account-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);
+  }
+  /* Bulk select mode */
+  .bulk-mode .account-card { cursor:pointer; padding-left:50px; }
+  .bulk-mode .account-card.selected { border-color:var(--gold); background:rgba(201,168,76,0.05); }
+  .bulk-mode .account-card:hover { border-color:rgba(201,168,76,0.4); }
+  .card-check {
+    position:absolute; top:16px; left:16px; z-index:2; display:none;
+    width:20px; height:20px; accent-color:var(--gold); cursor:pointer;
+  }
+  .bulk-mode .card-check { display:block; }
+
+  .card-header { display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+  .app-icon {
+    width:48px; height:48px; border-radius:14px;
+    background:linear-gradient(135deg,#1e2236,#252d45); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;
+  }
+  .card-title { font-size:16px; font-weight:600; margin-bottom:4px; }
+  .card-cat {
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11px; padding:3px 9px; border-radius:20px; font-weight:500; letter-spacing:0.3px;
+  }
+  .card-status { margin-left:auto; flex-shrink:0; }
+  .status-dot {
+    width:10px; height:10px; border-radius:50%; background:var(--success);
+    box-shadow:0 0 6px rgba(78,203,138,0.6); animation:shimmer 2s infinite;
+  }
+  .status-dot.used { background:var(--danger); box-shadow:0 0 6px rgba(224,92,106,0.6); animation:none; }
+
+  .card-field { margin-bottom:10px; }
+  .field-label { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; font-weight:500; }
+  .field-val {
+    font-family:'JetBrains Mono',monospace; font-size:13px;
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+    padding:8px 12px; display:flex; align-items:center; justify-content:space-between;
+    gap:8px; word-break:break-all; color:var(--text);
+  }
+  .copy-btn {
+    background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:14px; padding:2px 4px; border-radius:6px; transition:color 0.2s; flex-shrink:0;
+  }
+  .copy-btn:hover { color:var(--gold); }
+  .pw-val { filter:blur(5px); transition:filter 0.2s; cursor:pointer; user-select:none; }
+  .pw-val:hover { filter:blur(0); }
+  .card-note { font-size:12px; color:var(--muted); margin-bottom:12px; line-height:1.5; background:var(--glass); border-radius:8px; padding:8px 10px; border:1px solid var(--border); }
+  .card-actions { display:flex; gap:8px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+
+  /* ── LIST VIEW ── */
+  .accounts-list { display:flex; flex-direction:column; gap:10px; animation:fadeIn 0.4s ease; }
+  .account-list-item {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:16px 20px; display:flex;
+    align-items:center; gap:16px; transition:all 0.2s; position:relative;
+  }
+  .account-list-item:hover { border-color:rgba(201,168,76,0.25); }
+  .bulk-mode .account-list-item { cursor:pointer; padding-left:52px; }
+  .bulk-mode .account-list-item.selected { border-color:var(--gold); background:rgba(201,168,76,0.05); }
+  .list-check { position:absolute; left:18px; display:none; width:18px; height:18px; accent-color:var(--gold); }
+  .bulk-mode .list-check { display:block; }
+  .list-app { font-size:22px; }
+  .list-title { font-size:14px; font-weight:600; }
+  .list-email { font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .list-actions { margin-left:auto; display:flex; gap:6px; flex-shrink:0; }
+
+  /* ── EMPTY ── */
+  .empty-state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--muted); }
+  .empty-state .empty-ico { font-size:56px; margin-bottom:16px; opacity:0.4; }
+  .empty-state h3 { font-size:18px; margin-bottom:8px; color:var(--text); opacity:0.5; }
+  .empty-state p { font-size:14px; opacity:0.6; }
+
+  /* ── CATEGORY COLORS ── */
+  .cat-streaming { background:rgba(229,9,20,0.15); color:#ff6b6b; border-color:rgba(229,9,20,0.3); }
+  .cat-music { background:rgba(30,215,96,0.12); color:#1ed760; border-color:rgba(30,215,96,0.3); }
+  .cat-gaming { background:rgba(100,65,165,0.2); color:#c084fc; border-color:rgba(100,65,165,0.3); }
+  .cat-productivity { background:rgba(76,142,245,0.15); color:#4c8ef5; border-color:rgba(76,142,245,0.3); }
+  .cat-vpn { background:rgba(201,168,76,0.15); color:var(--gold2); border-color:rgba(201,168,76,0.3); }
+  .cat-education { background:rgba(251,191,36,0.12); color:#fbbf24; border-color:rgba(251,191,36,0.3); }
+  .cat-design { background:rgba(244,114,182,0.15); color:#f472b6; border-color:rgba(244,114,182,0.3); }
+  .cat-cloud { background:rgba(34,211,238,0.12); color:#22d3ee; border-color:rgba(34,211,238,0.3); }
+  .cat-other { background:rgba(255,255,255,0.06); color:var(--muted); border-color:var(--border); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(6px); z-index:1000; display:none;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--surface); border:1px solid var(--glass-border);
+    border-radius:24px; padding:36px; width:100%; max-width:520px;
+    max-height:90vh; overflow-y:auto; animation:fadeIn 0.3s ease; position:relative;
+  }
+  .modal::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent); border-radius:24px 24px 0 0;
+  }
+  .modal-title {
+    font-family:'Cinzel',serif; font-size:20px; font-weight:700; margin-bottom:8px;
+    background:linear-gradient(135deg,var(--text),var(--muted));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .modal-sub { color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .modal-actions { display:flex; gap:10px; margin-top:24px; }
+  .close-modal {
+    position:absolute; top:20px; right:20px; background:var(--glass);
+    border:1px solid var(--border); border-radius:8px; color:var(--muted);
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:16px; transition:all 0.2s;
+  }
+  .close-modal:hover { color:var(--text); border-color:var(--gold); }
+
+  /* ── BULK ADD MODAL ── */
+  .bulk-textarea {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:14px; color:var(--text);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px;
+    outline:none; resize:vertical; min-height:200px; line-height:1.9;
+    transition:border-color 0.2s;
+  }
+  .bulk-textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.12); }
+  .bulk-preview {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:14px; margin-top:12px;
+    max-height:200px; overflow-y:auto; display:none;
+  }
+  .bulk-row { display:flex; align-items:center; gap:10px; padding:5px 0; border-bottom:1px solid var(--border); font-size:12px; }
+  .bulk-row:last-child { border-bottom:none; }
+  .br-num { color:var(--muted); font-family:'JetBrains Mono',monospace; min-width:26px; }
+  .br-ok { color:var(--success); }
+  .br-err { color:var(--danger); }
+  .br-val { font-family:'JetBrains Mono',monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
+  .bulk-stats { display:flex; gap:10px; margin-top:12px; font-size:12px; flex-wrap:wrap; }
+  .bulk-stat { padding:4px 12px; border-radius:20px; font-weight:600; font-family:'JetBrains Mono',monospace; }
+  .bs-ok { background:rgba(78,203,138,0.15); color:var(--success); }
+  .bs-err { background:rgba(224,92,106,0.15); color:var(--danger); }
+  .bs-total { background:var(--gold-dim); color:var(--gold); }
+  .format-hint {
+    background:rgba(76,142,245,0.08); border:1px solid rgba(76,142,245,0.2);
+    border-radius:10px; padding:12px 14px; font-size:12px; color:var(--muted);
+    margin-bottom:14px; line-height:1.9;
+  }
+  .format-hint code {
+    background:rgba(255,255,255,0.07); padding:1px 7px; border-radius:5px;
+    font-family:'JetBrains Mono',monospace; color:var(--gold2);
+  }
+  .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .row-2 label { display:block; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; font-weight:500; }
+  .row-2 input, .row-2 select { padding:12px 14px; font-size:14px; }
+  .row-2 select { appearance:none; }
+
+  /* ── BULK ACTION BAR ── */
+  .bulk-action-bar {
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:16px; padding:10px 18px;
+    display:none; align-items:center; gap:10px;
+    z-index:500; box-shadow:0 8px 40px rgba(0,0,0,0.6);
+    animation:slideUp 0.3s ease; white-space:nowrap;
+    transition:border-color 0.3s;
+  }
+  .bulk-action-bar.active { display:flex; border-color:var(--border); }
+  .bulk-action-bar.has-selection { border-color:var(--gold); }
+  .bulk-count-wrap { display:flex; flex-direction:column; align-items:center; min-width:64px; }
+  .bulk-count { font-size:18px; font-weight:700; color:var(--gold); font-family:'JetBrains Mono',monospace; line-height:1; }
+  .bulk-count-label { font-size:10px; color:var(--muted); letter-spacing:0.5px; margin-top:2px; }
+  .bulk-sep { width:1px; height:32px; background:var(--border); flex-shrink:0; }
+  .bulk-actions-group { display:flex; align-items:center; gap:8px; }
+
+  /* ── CONFIRM ── */
+  .confirm-dialog {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(4px); z-index:2000; display:none;
+    align-items:center; justify-content:center;
+  }
+  .confirm-dialog.open { display:flex; }
+  .confirm-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:32px; max-width:380px; width:90%;
+    text-align:center; animation:fadeIn 0.25s ease;
+  }
+  .confirm-box .ico { font-size:40px; margin-bottom:16px; }
+  .confirm-box h3 { font-size:18px; margin-bottom:8px; }
+  .confirm-box p { color:var(--muted); font-size:14px; margin-bottom:8px; }
+  .confirm-box .confirm-detail {
+    background:rgba(224,92,106,0.08); border:1px solid rgba(224,92,106,0.2);
+    border-radius:10px; padding:10px 14px; margin-bottom:24px;
+    font-size:13px; color:var(--danger); font-family:'JetBrains Mono',monospace;
+  }
+  .confirm-box .actions { display:flex; gap:10px; justify-content:center; }
+
+  /* ── TOAST ── */
+  .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+  .toast {
+    background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+    padding:12px 18px; font-size:13px; display:flex; align-items:center; gap:10px;
+    min-width:240px; max-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    animation:slideIn 0.3s ease;
+  }
+  .toast.success { border-color:rgba(78,203,138,0.35); }
+  .toast.error { border-color:rgba(224,92,106,0.35); }
+  .toast.info { border-color:rgba(76,142,245,0.35); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px) {
+    .sidebar { transform:translateX(-100%); }
+    .sidebar.open { transform:translateX(0); }
+    .main-content { margin-left:0; padding:20px 16px; }
+    .accounts-grid { grid-template-columns:1fr; }
+    .login-card { padding:36px 24px; }
+    .row-2 { grid-template-columns:1fr; }
+    .bulk-action-bar { width:calc(100% - 32px); flex-wrap:wrap; justify-content:center; bottom:16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <h1>PREMIUMVAULT</h1>
+      <p>Secure Premium Account Manager</p>
+    </div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div id="loginError" class="error-msg"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <span class="ico">👤</span>
+          <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="ico">🔑</span>
+          <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="remember-row">
+        <input type="checkbox" id="rememberMe" checked>
+        <label for="rememberMe">Ingat saya di perangkat ini</label>
+      </div>
+      <button class="btn btn-gold" onclick="doLogin()">Masuk ke Vault →</button>
+      <div class="register-link">Belum punya akun? <a onclick="showRegister()">Daftar sekarang</a></div>
+    </div>
+
+    <!-- Register -->
+    <div id="registerForm" style="display:none">
+      <div id="regError" class="error-msg"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <span class="ico">👤</span>
+          <input type="text" id="regUser" placeholder="Buat username unik">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="ico">🔑</span>
+          <input type="password" id="regPass" placeholder="Min. 6 karakter">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Konfirmasi Password</label>
+        <div class="input-wrap">
+          <span class="ico">✅</span>
+          <input type="password" id="regPass2" placeholder="Ulangi password">
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="doRegister()" style="margin-bottom:12px">Buat Akun →</button>
+      <div class="register-link">Sudah punya akun? <a onclick="showLogin()">Masuk</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP ═══════════════════ -->
+<div id="app">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand">
+          <div class="sb-icon">🔐</div>
+          <div>
+            <div class="sb-title">PREMIUMVAULT</div>
+            <div class="sb-sub">Stock Manager</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Dashboard</div>
+        <div class="nav-item active" onclick="setPage('dashboard',this)">
+          <span class="nav-ico">🏠</span> Overview
+        </div>
+        <div class="nav-item" onclick="setPage('accounts',this)">
+          <span class="nav-ico">🗄️</span> Semua Akun
+          <span class="nav-badge" id="sbTotalBadge">0</span>
+        </div>
+
+        <div class="nav-section-label">Kategori</div>
+        <div id="sidebarCats"></div>
+
+        <div class="nav-section-label">Tambah Akun</div>
+        <div class="nav-item" onclick="openAddModal()">
+          <span class="nav-ico">➕</span> Tambah Satu
+        </div>
+        <div class="nav-item" onclick="openBulkModal()">
+          <span class="nav-ico">⚡</span> Bulk Add
+          <span class="nav-badge" style="background:rgba(78,203,138,0.15);color:var(--success)">NEW</span>
+        </div>
+
+        <div class="nav-section-label">Tools</div>
+        <div class="nav-item" onclick="exportJSON()">
+          <span class="nav-ico">📤</span> Export JSON
+        </div>
+        <div class="nav-item" onclick="exportCSV()">
+          <span class="nav-ico">📊</span> Export CSV
+        </div>
+        <div class="nav-item" onclick="triggerImport()">
+          <span class="nav-ico">📥</span> Import File
+        </div>
+        <input type="file" id="importFile" accept=".json,.csv,.txt" style="display:none" onchange="importData(event)">
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userNameDisplay">User</div>
+            <div class="user-role">⭐ Premium Vault</div>
+          </div>
+          <button class="logout-btn" onclick="logout()" title="Logout">🚪</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+      <!-- DASHBOARD -->
+      <div id="dashboardPage">
+        <div class="page-header">
+          <div>
+            <div class="page-title" id="greetTitle">Dashboard</div>
+            <div class="page-sub">Kelola semua stock akun premium kamu</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-info" onclick="openBulkModal()" style="width:auto;padding:12px 20px">⚡ Bulk Add</button>
+            <button class="btn btn-gold" onclick="openAddModal()" style="width:auto;padding:12px 20px">➕ Tambah Akun</button>
+          </div>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:13px;color:var(--muted);font-weight:500;letter-spacing:0.5px">TERBARU DITAMBAHKAN</div>
+        </div>
+        <div class="accounts-grid" id="recentGrid"></div>
+      </div>
+
+      <!-- ACCOUNTS -->
+      <div id="accountsPage" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title" id="catPageTitle">Semua Akun</div>
+            <div class="page-sub" id="catPageSub">Menampilkan semua akun premium</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="toggleBulkMode()" id="bulkModeBtn" style="width:auto;padding:12px 16px">☑️ Pilih</button>
+            <button class="btn btn-info" onclick="openBulkModal()" style="width:auto;padding:12px 16px">⚡ Bulk Add</button>
+            <button class="btn btn-gold" onclick="openAddModal()" style="width:auto;padding:12px 16px">➕ Tambah</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-wrap">
+            <span class="s-ico">🔍</span>
+            <input type="text" id="searchInput" placeholder="Cari akun, email, aplikasi..." oninput="renderAccounts()">
+          </div>
+          <select class="filter-select" id="statusFilter" onchange="renderAccounts()">
+            <option value="">Semua Status</option>
+            <option value="available">✅ Tersedia</option>
+            <option value="used">❌ Terpakai</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-btn active" id="gridBtn" onclick="setView('grid')" title="Grid">⊞</button>
+            <button class="view-btn" id="listBtn" onclick="setView('list')" title="List">≡</button>
+          </div>
+        </div>
+
+        <div class="cat-tabs" id="catTabs"></div>
+        <div id="accountsContainer"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD / EDIT ═══ -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal('addModal')">✕</button>
+    <div class="modal-title" id="modalTitle">Tambah Akun Premium</div>
+    <div class="modal-sub">Isi detail akun yang ingin disimpan ke vault</div>
+
+    <div class="form-group">
+      <label>Nama Aplikasi *</label>
+      <div class="input-wrap">
+        <span class="ico">📱</span>
+        <input type="text" id="f_app" placeholder="Netflix, Spotify, dll..." list="appSuggestions">
+        <datalist id="appSuggestions">
+          <option value="Netflix"><option value="Spotify"><option value="Disney+">
+          <option value="YouTube Premium"><option value="Amazon Prime"><option value="HBO Max">
+          <option value="Apple TV+"><option value="Crunchyroll"><option value="Hulu">
+          <option value="Steam"><option value="Xbox Game Pass"><option value="PlayStation Plus">
+          <option value="Valorant"><option value="Roblox Premium"><option value="EA Play">
+          <option value="NordVPN"><option value="ExpressVPN"><option value="Surfshark">
+          <option value="Microsoft 365"><option value="Adobe Creative Cloud"><option value="Canva Pro">
+          <option value="Notion"><option value="ChatGPT Plus"><option value="Google One">
+          <option value="iCloud+"><option value="Dropbox"><option value="OneDrive">
+          <option value="Udemy"><option value="Coursera"><option value="Skillshare">
+          <option value="Duolingo Plus"><option value="LinkedIn Premium">
+        </datalist>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Kategori *</label>
+      <div class="input-wrap">
+        <span class="ico">🏷️</span>
+        <select id="f_cat">
+          <option value="">-- Pilih Kategori --</option>
+          <option value="streaming">🎬 Streaming</option>
+          <option value="music">🎵 Music</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="productivity">💼 Productivity</option>
+          <option value="vpn">🛡️ VPN</option>
+          <option value="education">📚 Education</option>
+          <option value="design">🎨 Design</option>
+          <option value="cloud">☁️ Cloud Storage</option>
+          <option value="other">📦 Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Email / Username *</label>
+      <div class="input-wrap">
+        <span class="ico">📧</span>
+        <input type="text" id="f_email" placeholder="email@contoh.com atau username">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Password *</label>
+      <div class="input-wrap">
+        <span class="ico">🔑</span>
+        <input type="text" id="f_pass" placeholder="Password akun">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Profile / PIN (opsional)</label>
+      <div class="input-wrap">
+        <span class="ico">👤</span>
+        <input type="text" id="f_profile" placeholder="Nama profil / PIN akses">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tanggal Expired (opsional)</label>
+      <div class="input-wrap">
+        <span class="ico">📅</span>
+        <input type="text" id="f_expired" placeholder="Contoh: 31/12/2025 atau Desember 2025">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Status</label>
+      <div class="input-wrap">
+        <span class="ico">🔵</span>
+        <select id="f_status">
+          <option value="available">✅ Tersedia</option>
+          <option value="used">❌ Sudah Terpakai</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Catatan (opsional)</label>
+      <textarea id="f_note" placeholder="Tambahan info, instruksi, atau catatan..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')" style="flex:1">Batal</button>
+      <button class="btn btn-gold" onclick="saveAccount()" style="flex:2" id="saveBtn">💾 Simpan Akun</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: BULK ADD ═══ -->
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal" style="max-width:660px">
+    <button class="close-modal" onclick="closeModal('bulkModal')">✕</button>
+    <div class="modal-title">⚡ Bulk Add — Ratusan Akun</div>
+    <div class="modal-sub">Paste banyak akun sekaligus, satu baris satu akun</div>
+
+    <div class="format-hint">
+      <strong style="color:var(--text)">Format yang didukung (pilih salah satu per paste):</strong><br>
+      <code>email:password</code> — paling umum<br>
+      <code>email|password|profile</code> — dengan profil/PIN<br>
+      <code>email|password|profile|expired</code> — lengkap<br>
+      <code>email password</code> — dipisah spasi<br>
+      Baris kosong &amp; duplikat <strong style="color:var(--gold)">otomatis dilewati</strong>
+    </div>
+
+    <div class="row-2">
+      <div>
+        <label>Nama Aplikasi *</label>
+        <input type="text" id="bulk_app" placeholder="Netflix, Spotify, dll...">
+      </div>
+      <div>
+        <label>Kategori *</label>
+        <select id="bulk_cat">
+          <option value="streaming">🎬 Streaming</option>
+          <option value="music">🎵 Music</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="productivity">💼 Productivity</option>
+          <option value="vpn">🛡️ VPN</option>
+          <option value="education">📚 Education</option>
+          <option value="design">🎨 Design</option>
+          <option value="cloud">☁️ Cloud Storage</option>
+          <option value="other">📦 Other</option>
+        </select>
+      </div>
+    </div>
+
+    <textarea class="bulk-textarea" id="bulkInput"
+      placeholder="user1@gmail.com:password123&#10;user2@gmail.com:pass456&#10;user3@gmail.com|mypass|ProfileName&#10;user4@gmail.com|pass|Profile|Des 2025&#10;..."
+      oninput="parseBulkPreview()"></textarea>
+
+    <div class="bulk-stats" id="bulkStats"></div>
+    <div class="bulk-preview" id="bulkPreview"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('bulkModal')" style="flex:1">Batal</button>
+      <button class="btn btn-gold" onclick="saveBulk()" style="flex:2" id="bulkSaveBtn" disabled>💾 Simpan Akun</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BULK ACTION BAR ═══ -->
+<div class="bulk-action-bar" id="bulkActionBar">
+  <!-- Counter -->
+  <div class="bulk-count-wrap">
+    <span class="bulk-count" id="bulkSelCount">0</span>
+    <span class="bulk-count-label">DIPILIH</span>
+  </div>
+
+  <div class="bulk-sep"></div>
+
+  <!-- Pilih / Batal semua -->
+  <div class="bulk-actions-group">
+    <button class="btn btn-ghost btn-sm" id="btnSelectAll" onclick="bulkSelectAll()" title="Pilih semua yang tampil">☑️ Semua</button>
+    <button class="btn btn-ghost btn-sm" id="btnDeselectAll" onclick="bulkDeselectAll()" style="display:none" title="Batal pilih semua">⬜ Batal</button>
+  </div>
+
+  <div class="bulk-sep"></div>
+
+  <!-- Aksi (tampil hanya bila ada yang terpilih) -->
+  <div class="bulk-actions-group" id="bulkActionsGroup" style="display:none">
+    <button class="btn btn-success btn-sm" onclick="bulkSetStatus('available')">✅ Tersedia</button>
+    <button class="btn btn-ghost btn-sm" onclick="bulkSetStatus('used')">❌ Terpakai</button>
+    <button class="btn btn-danger btn-sm" onclick="bulkDeleteSelected()">🗑️ Hapus</button>
+  </div>
+
+  <div class="bulk-sep"></div>
+
+  <button class="btn btn-ghost btn-sm" onclick="exitBulkMode()">✕ Keluar</button>
+</div>
+
+<!-- ═══ CONFIRM DIALOG ═══ -->
+<div class="confirm-dialog" id="confirmDialog">
+  <div class="confirm-box">
+    <div class="ico" id="confirmIco">🗑️</div>
+    <h3 id="confirmTitle">Konfirmasi Hapus</h3>
+    <p id="confirmMsg">Akun ini akan dihapus permanen.</p>
+    <div class="confirm-detail" id="confirmDetail" style="display:none"></div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()" style="flex:1">Batal</button>
+      <button class="btn btn-danger" id="confirmBtn" style="flex:1">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONSTANTS & STATE
+═══════════════════════════════════════════════════════ */
+const USERS_KEY   = 'pv_users';
+const SESSION_KEY = 'pv_session';
+const REMEMBER_KEY= 'pv_remember';
+
+const CATEGORIES = {
+  all:          { label:'Semua',        icon:'🗂️', cls:'cat-other' },
+  streaming:    { label:'Streaming',    icon:'🎬', cls:'cat-streaming' },
+  music:        { label:'Music',        icon:'🎵', cls:'cat-music' },
+  gaming:       { label:'Gaming',       icon:'🎮', cls:'cat-gaming' },
+  productivity: { label:'Productivity', icon:'💼', cls:'cat-productivity' },
+  vpn:          { label:'VPN',          icon:'🛡️', cls:'cat-vpn' },
+  education:    { label:'Education',    icon:'📚', cls:'cat-education' },
+  design:       { label:'Design',       icon:'🎨', cls:'cat-design' },
+  cloud:        { label:'Cloud',        icon:'☁️', cls:'cat-cloud' },
+  other:        { label:'Other',        icon:'📦', cls:'cat-other' },
+};
+
+const APP_ICONS = {
+  netflix:'🎬', spotify:'🎵', disney:'✨', youtube:'▶️', amazon:'📦',
+  hbo:'🎭', apple:'🍎', crunchyroll:'🌸', hulu:'💚', steam:'🎮',
+  xbox:'🟢', playstation:'🎮', valorant:'⚡', roblox:'🧱', nordvpn:'🛡️',
+  expressvpn:'🔐', surfshark:'🦈', microsoft:'💠', adobe:'🎨', canva:'🖌️',
+  notion:'📝', chatgpt:'🤖', google:'☁️', icloud:'🍏', dropbox:'📂',
+  onedrive:'🔵', udemy:'🎓', coursera:'📚', skillshare:'✏️',
+  duolingo:'🦜', linkedin:'💼', ea:'🎯',
+};
+
+let currentUser      = null;
+let editingId        = null;
+let currentCatFilter = 'all';
+let currentView      = 'grid';
+let bulkMode         = false;
+let selectedIds      = new Set();
+let bulkParsed       = [];
+
+/* ═══════════════════════════════════════════════════════
+   STORAGE HELPERS
+═══════════════════════════════════════════════════════ */
+const getUsers     = ()   => JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+const saveUsers    = u    => localStorage.setItem(USERS_KEY, JSON.stringify(u));
+const getAccounts  = ()   => JSON.parse(localStorage.getItem(`pv_data_${currentUser}`) || '[]');
+const saveAccounts = data => localStorage.setItem(`pv_data_${currentUser}`, JSON.stringify(data));
+
+/* ═══════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════ */
+function showLogin() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('registerForm').style.display = 'none';
+}
+function showRegister() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+}
+
+function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const remember = document.getElementById('rememberMe').checked;
+  const errEl = document.getElementById('loginError');
+  if (!user || !pass) { showErr(errEl,'Username dan password wajib diisi'); return; }
+  const users = getUsers();
+  if (!users[user] || users[user].pass !== btoa(pass)) { showErr(errEl,'Username atau password salah'); return; }
+  errEl.style.display = 'none';
+  currentUser = user;
+  if (remember) localStorage.setItem(REMEMBER_KEY, JSON.stringify({ user }));
+  else localStorage.removeItem(REMEMBER_KEY);
+  sessionStorage.setItem(SESSION_KEY, user);
+  enterApp(user);
+}
+
+function doRegister() {
+  const user  = document.getElementById('regUser').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  const errEl = document.getElementById('regError');
+  if (!user||!pass) { showErr(errEl,'Semua field wajib diisi'); return; }
+  if (user.length < 3) { showErr(errEl,'Username min. 3 karakter'); return; }
+  if (pass.length < 6) { showErr(errEl,'Password min. 6 karakter'); return; }
+  if (pass !== pass2) { showErr(errEl,'Password tidak cocok'); return; }
+  const users = getUsers();
+  if (users[user]) { showErr(errEl,'Username sudah digunakan'); return; }
+  users[user] = { pass: btoa(pass), created: Date.now() };
+  saveUsers(users);
+  errEl.style.display = 'none';
+  toast('Akun berhasil dibuat! Silakan login.','success');
+  showLogin();
+}
+
+function logout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(REMEMBER_KEY);
+  currentUser = null;
+  exitBulkMode();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+function checkAutoLogin() {
+  const sess  = sessionStorage.getItem(SESSION_KEY);
+  const rem   = JSON.parse(localStorage.getItem(REMEMBER_KEY) || 'null');
+  const users = getUsers();
+  if (sess && users[sess]) { currentUser = sess; enterApp(sess); return; }
+  if (rem?.user && users[rem.user]) { currentUser = rem.user; enterApp(rem.user); return; }
+}
+
+function enterApp(username) {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('userNameDisplay').textContent = username;
+  document.getElementById('userAvatar').textContent = username[0].toUpperCase();
+  const h = new Date().getHours();
+  const greet = h<12?'Selamat Pagi':h<18?'Selamat Siang':'Selamat Malam';
+  document.getElementById('greetTitle').textContent = greet + ', ' + username + ' 👋';
+  renderAll();
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════ */
+function renderAll() {
+  const acc = getAccounts();
+  renderStats(acc);
+  renderSidebarCats(acc);
+  renderRecent(acc);
+  renderCatTabs(acc);
+  renderAccounts();
+  document.getElementById('sbTotalBadge').textContent = acc.length;
+}
+
+function renderStats(acc) {
+  const total = acc.length;
+  const avail = acc.filter(a=>a.status==='available').length;
+  const used  = acc.filter(a=>a.status==='used').length;
+  const cats  = [...new Set(acc.map(a=>a.cat))].length;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-ico">🗄️</div><div class="stat-val">${total}</div><div class="stat-label">Total Akun</div></div>
+    <div class="stat-card"><div class="stat-ico">✅</div><div class="stat-val">${avail}</div><div class="stat-label">Tersedia</div></div>
+    <div class="stat-card"><div class="stat-ico">❌</div><div class="stat-val">${used}</div><div class="stat-label">Terpakai</div></div>
+    <div class="stat-card"><div class="stat-ico">🏷️</div><div class="stat-val">${cats}</div><div class="stat-label">Kategori</div></div>
+  `;
+}
+
+function renderSidebarCats(acc) {
+  const counts = {};
+  acc.forEach(a => counts[a.cat] = (counts[a.cat]||0) + 1);
+  document.getElementById('sidebarCats').innerHTML =
+    Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([cat,count]) => {
+      const c = CATEGORIES[cat]||CATEGORIES.other;
+      return `<div class="nav-item" onclick="goToCategory('${cat}',this)">
+        <span class="nav-ico">${c.icon}</span> ${c.label}
+        <span class="nav-badge">${count}</span>
+      </div>`;
+    }).join('');
+}
+
+function renderRecent(acc) {
+  const recent = [...acc].sort((a,b)=>b.id-a.id).slice(0,6);
+  const grid = document.getElementById('recentGrid');
+  if (!recent.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-ico">📭</div><h3>Vault Masih Kosong</h3>
+      <p>Mulai tambahkan akun premium pertamamu!</p></div>`;
+    return;
+  }
+  grid.innerHTML = recent.map(a => renderCard(a)).join('');
+}
+
+function renderCatTabs(acc) {
+  const counts = {};
+  acc.forEach(a => counts[a.cat] = (counts[a.cat]||0) + 1);
+  document.getElementById('catTabs').innerHTML =
+    `<div class="cat-tab ${currentCatFilter==='all'?'active':''}" onclick="setCatFilter('all',this)">
+      ${CATEGORIES.all.icon} Semua <span class="tab-count">${acc.length}</span></div>` +
+    Object.entries(counts).map(([cat,count]) => {
+      const c = CATEGORIES[cat]||CATEGORIES.other;
+      return `<div class="cat-tab ${currentCatFilter===cat?'active':''}" onclick="setCatFilter('${cat}',this)">
+        ${c.icon} ${c.label} <span class="tab-count">${count}</span></div>`;
+    }).join('');
+}
+
+function setCatFilter(cat, el) {
+  currentCatFilter = cat;
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const c = CATEGORIES[cat]||CATEGORIES.other;
+  document.getElementById('catPageTitle').textContent = cat==='all'?'Semua Akun':c.label;
+  document.getElementById('catPageSub').textContent   = cat==='all'?'Menampilkan semua akun premium':`Akun kategori ${c.label}`;
+  renderAccounts();
+}
+
+function getFilteredAccounts() {
+  const acc     = getAccounts();
+  const search  = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const statusF = document.getElementById('statusFilter')?.value||'';
+  return acc.filter(a => {
+    const matchCat    = currentCatFilter==='all' || a.cat===currentCatFilter;
+    const matchSearch = !search ||
+      a.app.toLowerCase().includes(search) ||
+      a.email.toLowerCase().includes(search) ||
+      (a.note||'').toLowerCase().includes(search) ||
+      (a.profile||'').toLowerCase().includes(search);
+    const matchStatus = !statusF || a.status===statusF;
+    return matchCat && matchSearch && matchStatus;
+  }).sort((a,b)=>b.id-a.id);
+}
+
+function renderAccounts() {
+  const filtered  = getFilteredAccounts();
+  const container = document.getElementById('accountsContainer');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="${currentView==='grid'?'accounts-grid':'accounts-list'}">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-ico">🔍</div><h3>Tidak Ditemukan</h3>
+        <p>Coba ubah filter atau kata kunci pencarian</p></div></div>`;
+    return;
+  }
+  container.className = bulkMode ? 'bulk-mode' : '';
+  if (currentView==='grid') {
+    container.innerHTML = `<div class="accounts-grid ${bulkMode?'bulk-mode':''}">${filtered.map(a=>renderCard(a)).join('')}</div>`;
+  } else {
+    container.innerHTML = `<div class="accounts-list ${bulkMode?'bulk-mode':''}">${filtered.map(a=>renderListItem(a)).join('')}</div>`;
+  }
+  // Update bar setelah render agar tombol selectAll akurat
+  if (bulkMode) updateBulkBar();
+}
+
+function renderCard(a) {
+  const c = CATEGORIES[a.cat]||CATEGORIES.other;
+  const icon = getAppIcon(a.app);
+  const isAvail = a.status==='available';
+  const selected = selectedIds.has(a.id);
+  return `<div class="account-card${selected?' selected':''}" data-id="${a.id}" onclick="handleCardClick(${a.id},this)">
+    <input type="checkbox" class="card-check" ${selected?'checked':''} onchange="toggleSelect(${a.id},this.closest('.account-card'))" onclick="event.stopPropagation()">
+    <div class="card-header">
+      <div class="app-icon">${icon}</div>
+      <div>
+        <div class="card-title">${escHtml(a.app)}</div>
+        <span class="card-cat ${c.cls}">${c.icon} ${c.label}</span>
+      </div>
+      <div class="card-status">
+        <div class="status-dot ${isAvail?'':'used'}" title="${isAvail?'Tersedia':'Terpakai'}"></div>
+      </div>
+    </div>
+    <div class="card-field">
+      <div class="field-label">Email / Username</div>
+      <div class="field-val">
+        <span>${escHtml(a.email)}</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText('${escAttr(a.email)}','Email')" title="Copy email">📋</button>
+      </div>
+    </div>
+    <div class="card-field">
+      <div class="field-label">Password <small style="color:var(--muted);font-size:9px;letter-spacing:0">(hover untuk lihat)</small></div>
+      <div class="field-val">
+        <span class="pw-val">${escHtml(a.pass)}</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText('${escAttr(a.pass)}','Password')" title="Copy password">📋</button>
+      </div>
+    </div>
+    ${a.profile?`<div class="card-field">
+      <div class="field-label">Profile / PIN</div>
+      <div class="field-val"><span>${escHtml(a.profile)}</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText('${escAttr(a.profile)}','Profile')" title="Copy">📋</button>
+      </div></div>`:''}
+    ${a.expired?`<div class="card-field">
+      <div class="field-label">Expired</div>
+      <div class="field-val"><span>📅 ${escHtml(a.expired)}</span></div>
+    </div>`:''}
+    ${a.note?`<div class="card-note">💬 ${escHtml(a.note)}</div>`:''}
+    <div class="card-actions" onclick="event.stopPropagation()">
+      <button class="btn btn-ghost btn-sm" onclick="toggleStatus(${a.id})" style="flex:1">
+        ${isAvail?'❌ Terpakai':'✅ Tersedia'}
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="editAccount(${a.id})">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete(${a.id})">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function renderListItem(a) {
+  const c = CATEGORIES[a.cat]||CATEGORIES.other;
+  const icon = getAppIcon(a.app);
+  const isAvail = a.status==='available';
+  const selected = selectedIds.has(a.id);
+  return `<div class="account-list-item${selected?' selected':''}" data-id="${a.id}" onclick="handleCardClick(${a.id},this)">
+    <input type="checkbox" class="list-check" ${selected?'checked':''} onchange="toggleSelect(${a.id},this.closest('.account-list-item'))" onclick="event.stopPropagation()">
+    <div class="list-app">${icon}</div>
+    <div style="min-width:0;flex:1">
+      <div class="list-title">${escHtml(a.app)}</div>
+      <div class="list-email">${escHtml(a.email)}</div>
+    </div>
+    <span class="card-cat ${c.cls}" style="flex-shrink:0">${c.icon} ${c.label}</span>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <div class="status-dot ${isAvail?'':'used'}"></div>
+      <span style="font-size:12px;color:var(--muted)">${isAvail?'Tersedia':'Terpakai'}</span>
+    </div>
+    <div class="list-actions" onclick="event.stopPropagation()">
+      <button class="btn btn-ghost btn-xs" onclick="copyText('${escAttr(a.email)}','Email')">📋</button>
+      <button class="btn btn-ghost btn-xs" onclick="editAccount(${a.id})">✏️</button>
+      <button class="btn btn-danger btn-xs" onclick="confirmDelete(${a.id})">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function getAppIcon(name) {
+  const n = name.toLowerCase();
+  for (const [k,v] of Object.entries(APP_ICONS)) if (n.includes(k)) return v;
+  return '⭐';
+}
+
+/* ═══════════════════════════════════════════════════════
+   CRUD
+═══════════════════════════════════════════════════════ */
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Tambah Akun Premium';
+  document.getElementById('saveBtn').textContent = '💾 Simpan Akun';
+  ['f_app','f_email','f_pass','f_profile','f_expired','f_note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f_cat').value = '';
+  document.getElementById('f_status').value = 'available';
+  openModal('addModal');
+}
+
+function editAccount(id) {
+  const a = getAccounts().find(x=>x.id===id);
+  if (!a) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Akun';
+  document.getElementById('saveBtn').textContent = '💾 Update Akun';
+  document.getElementById('f_app').value     = a.app;
+  document.getElementById('f_cat').value     = a.cat;
+  document.getElementById('f_email').value   = a.email;
+  document.getElementById('f_pass').value    = a.pass;
+  document.getElementById('f_profile').value = a.profile||'';
+  document.getElementById('f_expired').value = a.expired||'';
+  document.getElementById('f_status').value  = a.status;
+  document.getElementById('f_note').value    = a.note||'';
+  openModal('addModal');
+}
+
+function saveAccount() {
+  const app     = document.getElementById('f_app').value.trim();
+  const cat     = document.getElementById('f_cat').value;
+  const email   = document.getElementById('f_email').value.trim();
+  const pass    = document.getElementById('f_pass').value.trim();
+  const profile = document.getElementById('f_profile').value.trim();
+  const expired = document.getElementById('f_expired').value.trim();
+  const status  = document.getElementById('f_status').value;
+  const note    = document.getElementById('f_note').value.trim();
+
+  if (!app||!cat||!email||!pass) { toast('Nama app, kategori, email, dan password wajib diisi!','error'); return; }
+
+  const accounts = getAccounts();
+  if (editingId) {
+    const idx = accounts.findIndex(x=>x.id===editingId);
+    if (idx>-1) accounts[idx] = {...accounts[idx], app, cat, email, pass, profile, expired, status, note};
+    toast('Akun berhasil diupdate! ✏️','success');
+  } else {
+    accounts.push({ id:Date.now(), app, cat, email, pass, profile, expired, status, note });
+    toast('Akun berhasil ditambahkan! ✅','success');
+  }
+  saveAccounts(accounts);
+  closeModal('addModal');
+  renderAll();
+}
+
+function toggleStatus(id) {
+  const acc = getAccounts();
+  const a = acc.find(x=>x.id===id);
+  if (!a) return;
+  a.status = a.status==='available' ? 'used' : 'available';
+  saveAccounts(acc);
+  renderAll();
+  toast(`Status: ${a.status==='available'?'Tersedia ✅':'Terpakai ❌'}`,'info');
+}
+
+function confirmDelete(id) {
+  const a = getAccounts().find(x=>x.id===id);
+  document.getElementById('confirmIco').textContent = '🗑️';
+  document.getElementById('confirmTitle').textContent = 'Konfirmasi Hapus';
+  document.getElementById('confirmMsg').textContent = 'Akun berikut akan dihapus permanen dan tidak bisa dikembalikan.';
+  const det = document.getElementById('confirmDetail');
+  det.style.display = 'block';
+  det.textContent = `${a?.app||'?'} — ${a?.email||id}`;
+  document.getElementById('confirmBtn').textContent = 'Hapus';
+  document.getElementById('confirmBtn').onclick = () => doDelete([id]);
+  document.getElementById('confirmDialog').classList.add('open');
+}
+
+function doDelete(ids) {
+  const acc = getAccounts().filter(a => !ids.includes(a.id));
+  saveAccounts(acc);
+  closeConfirm();
+  renderAll();
+  toast(`${ids.length} akun dihapus 🗑️`, 'error');
+}
+
+function closeConfirm() { document.getElementById('confirmDialog').classList.remove('open'); }
+
+/* ═══════════════════════════════════════════════════════
+   BULK ADD
+═══════════════════════════════════════════════════════ */
+function openBulkModal() {
+  document.getElementById('bulkInput').value = '';
+  document.getElementById('bulkPreview').style.display = 'none';
+  document.getElementById('bulkStats').innerHTML = '';
+  document.getElementById('bulkSaveBtn').disabled = true;
+  document.getElementById('bulkSaveBtn').textContent = '💾 Simpan Akun';
+  bulkParsed = [];
+  openModal('bulkModal');
+}
+
+function parseBulkLine(line) {
+  let parts;
+  if (line.includes('|')) {
+    parts = line.split('|');
+  } else if (line.includes(':')) {
+    const atIdx = line.indexOf('@');
+    const colonAfterAt = line.indexOf(':', atIdx > -1 ? atIdx : 0);
+    if (colonAfterAt > -1) {
+      parts = [line.slice(0, colonAfterAt), line.slice(colonAfterAt+1)];
+    } else parts = line.split(':');
+  } else if (line.includes('\t')) {
+    parts = line.split('\t');
+  } else {
+    parts = line.split(/\s+/);
+  }
+  parts = parts.map(p=>p.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  return { email:parts[0]||'', pass:parts[1]||'', profile:parts[2]||'', expired:parts[3]||'' };
+}
+
+function parseBulkPreview() {
+  const raw   = document.getElementById('bulkInput').value;
+  const lines = raw.split('\n').filter(l=>l.trim());
+  bulkParsed  = [];
+  const preview = [];
+  let okCount = 0, errCount = 0;
+
+  lines.forEach((line, i) => {
+    const r = parseBulkLine(line.trim());
+    if (r && r.email && r.pass) {
+      bulkParsed.push(r); okCount++;
+      preview.push(`<div class="bulk-row">
+        <span class="br-num">${i+1}</span>
+        <span class="br-ok">✓</span>
+        <span class="br-val">${escHtml(r.email)}</span>
+        <span style="color:var(--muted)">→</span>
+        <span class="br-val" style="color:var(--muted)">${escHtml(r.pass)}</span>
+        ${r.profile?`<span style="color:var(--muted);font-size:10px">[${escHtml(r.profile)}]</span>`:''}
+        ${r.expired?`<span style="color:var(--muted);font-size:10px">📅${escHtml(r.expired)}</span>`:''}
+      </div>`);
+    } else {
+      errCount++;
+      preview.push(`<div class="bulk-row">
+        <span class="br-num">${i+1}</span>
+        <span class="br-err">✗</span>
+        <span class="br-val" style="color:var(--muted);text-decoration:line-through">${escHtml(line.slice(0,50))}</span>
+      </div>`);
+    }
+  });
+
+  const statsEl   = document.getElementById('bulkStats');
+  const previewEl = document.getElementById('bulkPreview');
+  const saveBtn   = document.getElementById('bulkSaveBtn');
+
+  if (!lines.length) { statsEl.innerHTML=''; previewEl.style.display='none'; saveBtn.disabled=true; return; }
+
+  statsEl.innerHTML = `
+    <span class="bulk-stat bs-total">Total: ${lines.length}</span>
+    <span class="bulk-stat bs-ok">✅ Valid: ${okCount}</span>
+    ${errCount?`<span class="bulk-stat bs-err">❌ Error: ${errCount}</span>`:''}
+  `;
+  previewEl.style.display = 'block';
+  previewEl.innerHTML = preview.join('');
+  saveBtn.disabled = okCount === 0;
+  saveBtn.textContent = `💾 Simpan ${okCount} Akun`;
+}
+
+function saveBulk() {
+  const app = document.getElementById('bulk_app').value.trim();
+  const cat = document.getElementById('bulk_cat').value;
+  if (!app) { toast('Nama aplikasi wajib diisi!','error'); return; }
+  if (!bulkParsed.length) { toast('Tidak ada akun valid','error'); return; }
+
+  const accounts = getAccounts();
+  const existKeys = new Set(accounts.map(a=>`${a.email.toLowerCase()}|${a.app.toLowerCase()}`));
+  let added = 0, skipped = 0;
+
+  bulkParsed.forEach(item => {
+    const key = `${item.email.toLowerCase()}|${app.toLowerCase()}`;
+    if (existKeys.has(key)) { skipped++; return; }
+    existKeys.add(key);
+    accounts.push({
+      id: Date.now() + Math.random(),
+      app, cat,
+      email: item.email,
+      pass: item.pass,
+      profile: item.profile||'',
+      expired: item.expired||'',
+      status: 'available',
+      note: ''
+    });
+    added++;
+  });
+
+  saveAccounts(accounts);
+  closeModal('bulkModal');
+  renderAll();
+  let msg = `⚡ ${added} akun berhasil ditambahkan!`;
+  if (skipped) msg += ` (${skipped} duplikat dilewati)`;
+  toast(msg,'success');
+}
+
+/* ═══════════════════════════════════════════════════════
+   BULK SELECT & DELETE
+═══════════════════════════════════════════════════════ */
+function toggleBulkMode() {
+  bulkMode = !bulkMode;
+  selectedIds.clear();
+  const btn = document.getElementById('bulkModeBtn');
+  if (btn) btn.textContent = bulkMode ? '✕ Keluar Pilih' : '☑️ Pilih';
+  renderAccounts();
+  updateBulkBar();
+}
+
+function exitBulkMode() {
+  bulkMode = false;
+  selectedIds.clear();
+  const btn = document.getElementById('bulkModeBtn');
+  if (btn) btn.textContent = '☑️ Pilih';
+  renderAccounts();
+  updateBulkBar();
+}
+
+function handleCardClick(id, el) {
+  if (!bulkMode) return;
+  toggleSelect(id, el);
+}
+
+function toggleSelect(id, el) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+    el.classList.remove('selected');
+  } else {
+    selectedIds.add(id);
+    el.classList.add('selected');
+  }
+  const cb = el.querySelector('.card-check, .list-check');
+  if (cb) cb.checked = selectedIds.has(id);
+  updateBulkBar();
+}
+
+/* ── Pilih semua akun yang saat ini tampil (setelah filter) ── */
+function bulkSelectAll() {
+  const filteredIds = getFilteredAccounts().map(a => a.id);
+  filteredIds.forEach(id => selectedIds.add(id));
+  renderAccounts();  // re-render untuk sync checkbox & class selected
+  updateBulkBar();
+}
+
+/* ── Batal pilih semua ── */
+function bulkDeselectAll() {
+  selectedIds.clear();
+  renderAccounts();
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar        = document.getElementById('bulkActionBar');
+  const count      = selectedIds.size;
+  const hasSelection = count > 0;
+
+  if (bulkMode) {
+    bar.style.display = 'flex';
+    bar.classList.add('active');
+    bar.classList.toggle('has-selection', hasSelection);
+  } else {
+    bar.style.display = 'none';
+    bar.classList.remove('active','has-selection');
+    return;
+  }
+
+  // Update angka
+  document.getElementById('bulkSelCount').textContent = count;
+
+  // Tombol aksi grup (hapus, set status) — hanya tampil bila ada yang terpilih
+  document.getElementById('bulkActionsGroup').style.display = hasSelection ? 'flex' : 'none';
+
+  // Tombol select all / deselect all
+  const filteredIds  = getFilteredAccounts().map(a => a.id);
+  const allSelected  = filteredIds.length > 0 && filteredIds.every(id => selectedIds.has(id));
+  const btnSelectAll   = document.getElementById('btnSelectAll');
+  const btnDeselectAll = document.getElementById('btnDeselectAll');
+  if (btnSelectAll)   btnSelectAll.style.display   = allSelected ? 'none' : 'inline-flex';
+  if (btnDeselectAll) btnDeselectAll.style.display = allSelected ? 'inline-flex' : 'none';
+}
+
+function bulkSetStatus(status) {
+  const count = selectedIds.size;
+  if (!count) { toast('Pilih minimal 1 akun dulu','error'); return; }
+  const acc = getAccounts();
+  acc.forEach(a => { if (selectedIds.has(a.id)) a.status = status; });
+  saveAccounts(acc);
+  exitBulkMode();
+  renderAll();
+  toast(`${count} akun → ${status==='available'?'Tersedia ✅':'Terpakai ❌'}`,'info');
+}
+
+function bulkDeleteSelected() {
+  const count = selectedIds.size;
+  if (!count) { toast('Pilih minimal 1 akun dulu','error'); return; }
+
+  // Siapkan detail: nama-nama akun yang akan dihapus (maks 5, sisanya "dan X lainnya")
+  const acc = getAccounts();
+  const targets = acc.filter(a => selectedIds.has(a.id));
+  const preview = targets.slice(0,5).map(a=>`${a.app} — ${a.email}`).join('\n');
+  const extra   = targets.length > 5 ? `\n...dan ${targets.length - 5} akun lainnya` : '';
+
+  document.getElementById('confirmIco').textContent = '⚠️';
+  document.getElementById('confirmTitle').textContent = `Hapus ${count} Akun?`;
+  document.getElementById('confirmMsg').textContent = 'Akun-akun berikut akan dihapus permanen dan tidak bisa dikembalikan.';
+  const det = document.getElementById('confirmDetail');
+  det.style.display = 'block';
+  det.style.textAlign = 'left';
+  det.style.whiteSpace = 'pre-line';
+  det.textContent = preview + extra;
+  document.getElementById('confirmBtn').textContent = `🗑️ Hapus ${count} Akun`;
+  document.getElementById('confirmBtn').onclick = () => {
+    doDelete([...selectedIds]);
+    exitBulkMode();
+  };
+  document.getElementById('confirmDialog').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════
+   IMPORT / EXPORT
+═══════════════════════════════════════════════════════ */
+function exportJSON() {
+  const acc = getAccounts();
+  const blob = new Blob([JSON.stringify({user:currentUser,accounts:acc,exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  downloadBlob(blob, `premiumvault_${currentUser}_${Date.now()}.json`);
+  toast('Export JSON berhasil! 📤','success');
+}
+
+function exportCSV() {
+  const acc = getAccounts();
+  const header = 'app,cat,email,pass,profile,expired,status,note';
+  const rows = acc.map(a => [a.app,a.cat,a.email,a.pass,a.profile||'',a.expired||'',a.status,a.note||'']
+    .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = [header,...rows].join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  downloadBlob(blob, `premiumvault_${currentUser}_${Date.now()}.csv`);
+  toast('Export CSV berhasil! 📊','success');
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() { document.getElementById('importFile').click(); }
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const isCsv = file.name.endsWith('.csv');
+  const isTxt = file.name.endsWith('.txt');
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    try {
+      const existing = getAccounts();
+      let added = 0;
+
+      if (isCsv) {
+        const lines = e.target.result.split('\n').filter(l=>l.trim());
+        const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+        const existKeys = new Set(existing.map(a=>`${a.email.toLowerCase()}|${a.app.toLowerCase()}`));
+        lines.slice(1).forEach(line => {
+          const vals = line.split(',').map(v=>v.trim().replace(/^"|"$/g,'').replace(/""/g,'"'));
+          const row = {};
+          headers.forEach((h,i) => row[h]=vals[i]||'');
+          const acct = {
+            id:Date.now()+Math.random(),
+            app:row.app||row.aplikasi||'Unknown',
+            cat:row.cat||row.kategori||'other',
+            email:row.email||row.username||'',
+            pass:row.pass||row.password||'',
+            profile:row.profile||'',
+            expired:row.expired||'',
+            status:row.status||'available',
+            note:row.note||row.catatan||''
+          };
+          const key = `${acct.email.toLowerCase()}|${acct.app.toLowerCase()}`;
+          if (acct.email && acct.pass && !existKeys.has(key)) {
+            existKeys.add(key); existing.push(acct); added++;
+          }
+        });
+
+      } else if (isTxt) {
+        const lines = e.target.result.split('\n').filter(l=>l.trim());
+        const existKeys = new Set(existing.map(a=>a.email.toLowerCase()));
+        lines.forEach(line => {
+          const r = parseBulkLine(line.trim());
+          if (r && r.email && r.pass && !existKeys.has(r.email.toLowerCase())) {
+            existKeys.add(r.email.toLowerCase());
+            existing.push({ id:Date.now()+Math.random(), app:'Import',cat:'other',
+              email:r.email, pass:r.pass, profile:r.profile||'',
+              expired:r.expired||'', status:'available', note:'' });
+            added++;
+          }
+        });
+
+      } else {
+        const data = JSON.parse(e.target.result);
+        if (!data.accounts || !Array.isArray(data.accounts)) { toast('Format JSON tidak valid!','error'); return; }
+        const existKeys = new Set(existing.map(a=>`${a.email.toLowerCase()}|${a.app.toLowerCase()}`));
+        data.accounts.forEach(a => {
+          const key = `${a.email.toLowerCase()}|${a.app.toLowerCase()}`;
+          if (!existKeys.has(key)) { existKeys.add(key); existing.push({...a,id:Date.now()+Math.random()}); added++; }
+        });
+      }
+
+      saveAccounts(existing);
+      renderAll();
+      toast(`${added} akun berhasil diimport! 📥`,'success');
+    } catch(err) {
+      toast('Gagal membaca file: '+err.message,'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+function setPage(page, el) {
+  document.getElementById('dashboardPage').style.display = page==='dashboard' ? 'block':'none';
+  document.getElementById('accountsPage').style.display  = page==='accounts'  ? 'block':'none';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (page==='accounts') renderAll();
+}
+
+function goToCategory(cat, el) {
+  currentCatFilter = cat;
+  setPage('accounts', el);
+  const c = CATEGORIES[cat]||CATEGORIES.other;
+  document.getElementById('catPageTitle').textContent = c.label;
+  document.getElementById('catPageSub').textContent = `Akun kategori ${c.label}`;
+  renderCatTabs(getAccounts());
+  renderAccounts();
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('gridBtn').classList.toggle('active', v==='grid');
+  document.getElementById('listBtn').classList.toggle('active', v==='list');
+  renderAccounts();
+}
+
+/* ═══════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════ */
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function copyText(text, label) {
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>toast(`${label} tersalin! 📋`,'success')).catch(fallback);
+  else { fallback(); toast(`${label} tersalin! 📋`,'success'); }
+}
+
+function toast(msg, type='info') {
+  const icons = {success:'✅',error:'❌',info:'ℹ️'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${escHtml(msg)}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+/* ── KEYBOARD & EVENTS ── */
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('loginPass').focus(); });
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); });
+});
+document.getElementById('confirmDialog').addEventListener('click', e => {
+  if(e.target===e.currentTarget) closeConfirm();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(o=>closeModal(o.id));
+    if (document.getElementById('confirmDialog').classList.contains('open')) closeConfirm();
+    if (bulkMode) exitBulkMode();
+  }
+});
+
+/* ── INIT ── */
+checkAutoLogin();
+</script>
+</body>
+</html>
